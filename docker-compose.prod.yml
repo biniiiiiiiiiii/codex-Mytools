@@ -1,0 +1,7 @@
+services:
+  my-tools:
+    image: ${MY_TOOLS_IMAGE:?MY_TOOLS_IMAGE is required}
+    container_name: my-tools
+    restart: unless-stopped
+    ports:
+      - "${MY_TOOLS_PORT:-8080}:80"

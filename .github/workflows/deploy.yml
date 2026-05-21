@@ -1,0 +1,123 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-my-tools
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build app
+        run: npm run build
+
+      - name: Prepare image names
+        env:
+          ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
+          ACR_NAMESPACE: ${{ secrets.ACR_NAMESPACE }}
+        run: |
+          IMAGE_REPO="${ACR_REGISTRY}/${ACR_NAMESPACE}/my-tools"
+          IMAGE_TAG="${GITHUB_SHA::12}"
+          echo "IMAGE_REPO=${IMAGE_REPO}" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+          echo "IMAGE_SHA=${IMAGE_REPO}:${IMAGE_TAG}" >> "$GITHUB_ENV"
+          echo "IMAGE_LATEST=${IMAGE_REPO}:latest" >> "$GITHUB_ENV"
+
+      - name: Login to Alibaba Cloud ACR
+        env:
+          ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
+          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+        run: |
+          echo "$ACR_PASSWORD" | docker login "$ACR_REGISTRY" -u "$ACR_USERNAME" --password-stdin
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t "$IMAGE_SHA" -t "$IMAGE_LATEST" .
+          docker push "$IMAGE_SHA"
+          docker push "$IMAGE_LATEST"
+
+      - name: Prepare SSH
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+          ECS_SSH_PORT: ${{ secrets.ECS_SSH_PORT }}
+        run: |
+          SSH_PORT="${ECS_SSH_PORT:-22}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$ECS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" -H "$ECS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload compose file
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_USER: ${{ secrets.ECS_USER }}
+          ECS_SSH_PORT: ${{ secrets.ECS_SSH_PORT }}
+          ECS_DEPLOY_PATH: ${{ secrets.ECS_DEPLOY_PATH }}
+        run: |
+          SSH_PORT="${ECS_SSH_PORT:-22}"
+          DEPLOY_PATH="${ECS_DEPLOY_PATH:-/opt/my-tools}"
+          printf -v DEPLOY_PATH_Q '%q' "$DEPLOY_PATH"
+          ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$ECS_USER@$ECS_HOST" "mkdir -p $DEPLOY_PATH_Q"
+          scp -P "$SSH_PORT" -i ~/.ssh/deploy_key docker-compose.prod.yml "$ECS_USER@$ECS_HOST:$DEPLOY_PATH/docker-compose.yml"
+
+      - name: Deploy on ECS
+        env:
+          ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
+          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
+          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_USER: ${{ secrets.ECS_USER }}
+          ECS_SSH_PORT: ${{ secrets.ECS_SSH_PORT }}
+          ECS_DEPLOY_PATH: ${{ secrets.ECS_DEPLOY_PATH }}
+          ECS_APP_PORT: ${{ secrets.ECS_APP_PORT }}
+        run: |
+          SSH_PORT="${ECS_SSH_PORT:-22}"
+          DEPLOY_PATH="${ECS_DEPLOY_PATH:-/opt/my-tools}"
+          APP_PORT="${ECS_APP_PORT:-8080}"
+          printf -v ACR_REGISTRY_Q '%q' "$ACR_REGISTRY"
+          printf -v ACR_USERNAME_Q '%q' "$ACR_USERNAME"
+          printf -v ACR_PASSWORD_Q '%q' "$ACR_PASSWORD"
+          printf -v DEPLOY_PATH_Q '%q' "$DEPLOY_PATH"
+          printf -v IMAGE_SHA_Q '%q' "$IMAGE_SHA"
+          printf -v APP_PORT_Q '%q' "$APP_PORT"
+
+          ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$ECS_USER@$ECS_HOST" \
+            "ACR_REGISTRY=$ACR_REGISTRY_Q ACR_USERNAME=$ACR_USERNAME_Q ACR_PASSWORD=$ACR_PASSWORD_Q DEPLOY_PATH=$DEPLOY_PATH_Q IMAGE_SHA=$IMAGE_SHA_Q APP_PORT=$APP_PORT_Q bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$DEPLOY_PATH"
+          printf '%s\n' "$ACR_PASSWORD" | docker login "$ACR_REGISTRY" -u "$ACR_USERNAME" --password-stdin
+          printf 'MY_TOOLS_IMAGE=%s\nMY_TOOLS_PORT=%s\n' "$IMAGE_SHA" "$APP_PORT" > .env
+          docker compose pull
+          docker compose up -d --no-build
+          docker image prune -f
+          REMOTE

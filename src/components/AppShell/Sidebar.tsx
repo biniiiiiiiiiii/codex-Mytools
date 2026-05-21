@@ -4,12 +4,12 @@ const navItems = [
   { to: '/', label: '首页', description: '工作台 / 快速入口' },
   { to: '/formatter', label: '格式化 / 压缩', description: 'Monaco + 本地处理' },
   { to: '/validator', label: 'JSON 校验', description: '错误位置与提示' },
+  { to: '/converter', label: 'JSON 转 C#', description: '本地代码生成' },
 ]
 
 const futureItems = [
   { label: 'JSON Diff', description: '第 2 轮预留' },
   { label: 'JSONPath', description: '第 2 轮预留' },
-  { label: 'JSON 转 C#', description: '第 3 轮预留' },
 ]
 
 export function Sidebar() {
