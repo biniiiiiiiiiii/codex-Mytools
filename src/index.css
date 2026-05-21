@@ -81,11 +81,6 @@ button {
   letter-spacing: 0.01em;
 }
 
-.topbar__meta {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
 .topbar__actions {
   display: flex;
   gap: 8px;
