@@ -39,6 +39,23 @@ jobs:
       - name: Build app
         run: npm run build
 
+      - name: Validate deployment secrets
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_USER: ${{ secrets.ECS_USER }}
+          ECS_SSH_KEY: ${{ secrets.ECS_SSH_KEY }}
+        run: |
+          missing=0
+          for name in DOCKERHUB_USERNAME DOCKERHUB_TOKEN ECS_HOST ECS_USER ECS_SSH_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error title=Missing secret::$name is not configured in GitHub Actions secrets"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
       - name: Prepare image names
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
