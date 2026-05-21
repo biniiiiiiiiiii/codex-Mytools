@@ -30,3 +30,9 @@ export const SAMPLE_CSHARP_JSON = `{
     }
   ]
 }`
+
+export const SAMPLE_SQL = `select u.id,u.name,o.order_no,o.amount
+from users u
+left join orders o on u.id=o.user_id
+where u.status='active' and o.created_at>='2026-01-01'
+order by o.created_at desc;`

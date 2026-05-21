@@ -1,6 +1,6 @@
 const memoryStorage = new Map<string, string>()
 const storageProbeKey = '__my-tools_storage_probe__'
-const allowedRoutes = new Set(['/', '/formatter', '/validator', '/converter'])
+const allowedRoutes = new Set(['/', '/formatter', '/validator', '/converter', '/sql-formatter'])
 
 export const storageKeys = {
   formatterInput: 'my-tools:formatter-input',
@@ -10,6 +10,7 @@ export const storageKeys = {
   converterNamespace: 'my-tools:converter-namespace',
   converterUseJsonPropertyName: 'my-tools:converter-use-json-property-name',
   converterDetectDateTime: 'my-tools:converter-detect-datetime',
+  sqlFormatterInput: 'bin-tool-sql-formatter-input',
   lastRoute: 'my-tools:last-route',
 } as const
 
@@ -175,6 +176,18 @@ export function saveConverterDetectDateTime(value: boolean) {
 
 export function clearConverterDetectDateTime() {
   return clearValue(storageKeys.converterDetectDateTime)
+}
+
+export function loadSqlFormatterInput() {
+  return readValue(storageKeys.sqlFormatterInput)
+}
+
+export function saveSqlFormatterInput(value: string) {
+  return writeValue(storageKeys.sqlFormatterInput, value)
+}
+
+export function clearSqlFormatterInput() {
+  return clearValue(storageKeys.sqlFormatterInput)
 }
 
 export function loadLastRoute() {

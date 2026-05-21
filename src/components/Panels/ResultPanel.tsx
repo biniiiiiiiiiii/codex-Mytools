@@ -6,6 +6,7 @@ type ResultPanelProps = {
   description?: string
   value?: string
   readonly?: boolean
+  language?: string
   tone?: 'default' | 'success' | 'error'
   emptyText?: string
   mode?: 'editor' | 'text'
@@ -17,6 +18,7 @@ export function ResultPanel({
   description,
   value = '',
   readonly = true,
+  language = 'json',
   tone = 'default',
   emptyText = '结果会显示在这里。',
   mode = 'editor',
@@ -34,7 +36,7 @@ export function ResultPanel({
       </div>
       {mode === 'editor' ? (
         value ? (
-          <JsonEditor value={value} readonly={readonly} />
+          <JsonEditor value={value} readonly={readonly} language={language} />
         ) : (
           <div className={contentClass}>
             <span className="result-panel__empty">{emptyText}</span>

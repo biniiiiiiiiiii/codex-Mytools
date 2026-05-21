@@ -24,14 +24,6 @@ export function HomePage() {
           <h2>本轮功能</h2>
           <p>Monaco 编辑器、本地 JSON 处理、结果复制、最近输入自动保存，以及基础工具函数测试。</p>
         </section>
-        <section className="home-card">
-          <h2>后续预留</h2>
-          <ul className="result-list">
-            <li>JSON Diff</li>
-            <li>JSONPath 查询</li>
-            <li>JSON 转 C# Class</li>
-          </ul>
-        </section>
       </div>
     </div>
   )

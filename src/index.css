@@ -116,8 +116,7 @@ button {
   gap: 8px;
 }
 
-.sidebar__item,
-.sidebar__item--disabled {
+.sidebar__item {
   display: block;
   padding: 10px 12px;
   border-radius: 12px;
@@ -125,8 +124,7 @@ button {
   transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease;
 }
 
-.sidebar__item > div,
-.sidebar__item--disabled > div {
+.sidebar__item > div {
   font-size: 15px;
   font-weight: 600;
 }
@@ -136,11 +134,6 @@ button {
   background: var(--accent-soft);
   border-color: rgba(23, 107, 135, 0.2);
   transform: translateX(2px);
-}
-
-.sidebar__item--disabled {
-  color: #9b8d7f;
-  background: rgba(255, 255, 255, 0.35);
 }
 
 .sidebar__badge {
