@@ -80,6 +80,10 @@ jobs:
           docker push "$IMAGE_SHA"
           docker push "$IMAGE_LATEST"
 
+      - name: Export Docker image
+        run: |
+          docker save "$IMAGE_SHA" | gzip > my-tools-image.tar.gz
+
       - name: Prepare SSH
         env:
           ECS_HOST: ${{ secrets.ECS_HOST }}
@@ -104,11 +108,10 @@ jobs:
           printf -v DEPLOY_PATH_Q '%q' "$DEPLOY_PATH"
           ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$ECS_USER@$ECS_HOST" "mkdir -p $DEPLOY_PATH_Q"
           scp -P "$SSH_PORT" -i ~/.ssh/deploy_key docker-compose.prod.yml "$ECS_USER@$ECS_HOST:$DEPLOY_PATH/docker-compose.yml"
+          scp -P "$SSH_PORT" -i ~/.ssh/deploy_key my-tools-image.tar.gz "$ECS_USER@$ECS_HOST:$DEPLOY_PATH/my-tools-image.tar.gz"
 
       - name: Deploy on ECS
         env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           ECS_HOST: ${{ secrets.ECS_HOST }}
           ECS_USER: ${{ secrets.ECS_USER }}
           ECS_SSH_PORT: ${{ secrets.ECS_SSH_PORT }}
@@ -118,19 +121,17 @@ jobs:
           SSH_PORT="${ECS_SSH_PORT:-22}"
           DEPLOY_PATH="${ECS_DEPLOY_PATH:-/root/Images/Mytools}"
           APP_PORT="${ECS_APP_PORT:-8808}"
-          printf -v DOCKERHUB_USERNAME_Q '%q' "$DOCKERHUB_USERNAME"
-          printf -v DOCKERHUB_TOKEN_Q '%q' "$DOCKERHUB_TOKEN"
           printf -v DEPLOY_PATH_Q '%q' "$DEPLOY_PATH"
           printf -v IMAGE_SHA_Q '%q' "$IMAGE_SHA"
           printf -v APP_PORT_Q '%q' "$APP_PORT"
 
           ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$ECS_USER@$ECS_HOST" \
-            "DOCKERHUB_USERNAME=$DOCKERHUB_USERNAME_Q DOCKERHUB_TOKEN=$DOCKERHUB_TOKEN_Q DEPLOY_PATH=$DEPLOY_PATH_Q IMAGE_SHA=$IMAGE_SHA_Q APP_PORT=$APP_PORT_Q bash -s" <<'REMOTE'
+            "DEPLOY_PATH=$DEPLOY_PATH_Q IMAGE_SHA=$IMAGE_SHA_Q APP_PORT=$APP_PORT_Q bash -s" <<'REMOTE'
           set -euo pipefail
           cd "$DEPLOY_PATH"
-          printf '%s\n' "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          gzip -dc my-tools-image.tar.gz | docker load
           printf 'MY_TOOLS_IMAGE=%s\nMY_TOOLS_PORT=%s\n' "$IMAGE_SHA" "$APP_PORT" > .env
-          docker compose pull
           docker compose up -d --no-build
+          rm -f my-tools-image.tar.gz
           docker image prune -f
           REMOTE
