@@ -41,23 +41,21 @@ jobs:
 
       - name: Prepare image names
         env:
-          ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
-          ACR_NAMESPACE: ${{ secrets.ACR_NAMESPACE }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          IMAGE_REPO="${ACR_REGISTRY}/${ACR_NAMESPACE}/my-tools"
+          IMAGE_REPO="${DOCKERHUB_USERNAME}/my-tools"
           IMAGE_TAG="${GITHUB_SHA::12}"
           echo "IMAGE_REPO=${IMAGE_REPO}" >> "$GITHUB_ENV"
           echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
           echo "IMAGE_SHA=${IMAGE_REPO}:${IMAGE_TAG}" >> "$GITHUB_ENV"
           echo "IMAGE_LATEST=${IMAGE_REPO}:latest" >> "$GITHUB_ENV"
 
-      - name: Login to Alibaba Cloud ACR
+      - name: Login to Docker Hub
         env:
-          ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
-          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
-          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          echo "$ACR_PASSWORD" | docker login "$ACR_REGISTRY" -u "$ACR_USERNAME" --password-stdin
+          echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
       - name: Build and push Docker image
         run: |
@@ -85,16 +83,15 @@ jobs:
           ECS_DEPLOY_PATH: ${{ secrets.ECS_DEPLOY_PATH }}
         run: |
           SSH_PORT="${ECS_SSH_PORT:-22}"
-          DEPLOY_PATH="${ECS_DEPLOY_PATH:-/opt/my-tools}"
+          DEPLOY_PATH="${ECS_DEPLOY_PATH:-/root/Images/Mytools}"
           printf -v DEPLOY_PATH_Q '%q' "$DEPLOY_PATH"
           ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$ECS_USER@$ECS_HOST" "mkdir -p $DEPLOY_PATH_Q"
           scp -P "$SSH_PORT" -i ~/.ssh/deploy_key docker-compose.prod.yml "$ECS_USER@$ECS_HOST:$DEPLOY_PATH/docker-compose.yml"
 
       - name: Deploy on ECS
         env:
-          ACR_REGISTRY: ${{ secrets.ACR_REGISTRY }}
-          ACR_USERNAME: ${{ secrets.ACR_USERNAME }}
-          ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           ECS_HOST: ${{ secrets.ECS_HOST }}
           ECS_USER: ${{ secrets.ECS_USER }}
           ECS_SSH_PORT: ${{ secrets.ECS_SSH_PORT }}
@@ -102,20 +99,19 @@ jobs:
           ECS_APP_PORT: ${{ secrets.ECS_APP_PORT }}
         run: |
           SSH_PORT="${ECS_SSH_PORT:-22}"
-          DEPLOY_PATH="${ECS_DEPLOY_PATH:-/opt/my-tools}"
-          APP_PORT="${ECS_APP_PORT:-8080}"
-          printf -v ACR_REGISTRY_Q '%q' "$ACR_REGISTRY"
-          printf -v ACR_USERNAME_Q '%q' "$ACR_USERNAME"
-          printf -v ACR_PASSWORD_Q '%q' "$ACR_PASSWORD"
+          DEPLOY_PATH="${ECS_DEPLOY_PATH:-/root/Images/Mytools}"
+          APP_PORT="${ECS_APP_PORT:-8808}"
+          printf -v DOCKERHUB_USERNAME_Q '%q' "$DOCKERHUB_USERNAME"
+          printf -v DOCKERHUB_TOKEN_Q '%q' "$DOCKERHUB_TOKEN"
           printf -v DEPLOY_PATH_Q '%q' "$DEPLOY_PATH"
           printf -v IMAGE_SHA_Q '%q' "$IMAGE_SHA"
           printf -v APP_PORT_Q '%q' "$APP_PORT"
 
           ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key "$ECS_USER@$ECS_HOST" \
-            "ACR_REGISTRY=$ACR_REGISTRY_Q ACR_USERNAME=$ACR_USERNAME_Q ACR_PASSWORD=$ACR_PASSWORD_Q DEPLOY_PATH=$DEPLOY_PATH_Q IMAGE_SHA=$IMAGE_SHA_Q APP_PORT=$APP_PORT_Q bash -s" <<'REMOTE'
+            "DOCKERHUB_USERNAME=$DOCKERHUB_USERNAME_Q DOCKERHUB_TOKEN=$DOCKERHUB_TOKEN_Q DEPLOY_PATH=$DEPLOY_PATH_Q IMAGE_SHA=$IMAGE_SHA_Q APP_PORT=$APP_PORT_Q bash -s" <<'REMOTE'
           set -euo pipefail
           cd "$DEPLOY_PATH"
-          printf '%s\n' "$ACR_PASSWORD" | docker login "$ACR_REGISTRY" -u "$ACR_USERNAME" --password-stdin
+          printf '%s\n' "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           printf 'MY_TOOLS_IMAGE=%s\nMY_TOOLS_PORT=%s\n' "$IMAGE_SHA" "$APP_PORT" > .env
           docker compose pull
           docker compose up -d --no-build
