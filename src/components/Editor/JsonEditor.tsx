@@ -5,7 +5,7 @@ type JsonEditorProps = {
   onChange?: (value: string) => void
   language?: string
   readonly?: boolean
-  height?: number
+  height?: number | string
 }
 
 export function JsonEditor({
