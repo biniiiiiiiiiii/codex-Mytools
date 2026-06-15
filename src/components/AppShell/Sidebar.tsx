@@ -3,8 +3,6 @@ import { NavLink } from 'react-router-dom'
 const navItems = [
   { to: '/', label: '首页' },
   { to: '/formatter', label: '格式化 / 压缩', description: 'Monaco + 本地处理' },
-  { to: '/validator', label: 'JSON 校验', description: '错误位置与提示' },
-  { to: '/converter', label: 'JSON 转 C#', description: '本地代码生成' },
   { to: '/sql-formatter', label: 'SQL 格式化', description: '多方言美化' },
 ]
 
