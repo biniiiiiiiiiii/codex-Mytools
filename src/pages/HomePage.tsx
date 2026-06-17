@@ -4,25 +4,53 @@ export function HomePage() {
   return (
     <div className="page">
       <section className="page__hero">
-        <p className="page__eyebrow">Round 1 / MVP</p>
-        <h2 className="page__title">欢迎使用 JSON 工具站</h2>
+        <p className="page__eyebrow">本地优先</p>
+        <h2 className="page__title">把常用数据整理动作放在一个安静的工作台里</h2>
         <p className="page__description">
-          这是一个纯前端、本地处理优先的自用工具站。第 1 轮聚焦 JSON 格式化、压缩与校验，后续功能只预留入口，不引入额外后端能力。
+          纯前端运行，面向 JSON、SQL 和 C# 样本转换。输入只保留在浏览器本地，适合快速整理接口数据和排查格式问题。
         </p>
         <div className="home-actions">
           <Link className="button" to="/formatter">
-            进入格式化 / 压缩
+            打开格式化
           </Link>
           <Link className="button--secondary" to="/validator">
-            进入 JSON 校验
+            校验 JSON
           </Link>
         </div>
       </section>
 
       <div className="home-grid">
         <section className="home-card">
-          <h2>本轮功能</h2>
-          <p>Monaco 编辑器、本地 JSON 处理、结果复制、最近输入自动保存，以及基础工具函数测试。</p>
+          <span className="home-card__meta">常用</span>
+          <h2>JSON 格式化 / 压缩</h2>
+          <p>把接口返回、配置片段和日志中的 JSON 整理成可读格式，也可以压缩成单行。</p>
+          <Link className="home-card__link" to="/formatter">
+            进入工具
+          </Link>
+        </section>
+        <section className="home-card home-card--tinted">
+          <span className="home-card__meta">数据库</span>
+          <h2>SQL 格式化</h2>
+          <p>支持常见 SQL 方言和关键字大小写设置，便于在评审和排查时快速阅读查询。</p>
+          <Link className="home-card__link" to="/sql-formatter">
+            进入工具
+          </Link>
+        </section>
+        <section className="home-card">
+          <span className="home-card__meta">检查</span>
+          <h2>JSON 校验</h2>
+          <p>检查语法合法性，尽量给出行列位置和可操作提示，减少定位错误的时间。</p>
+          <Link className="home-card__link" to="/validator">
+            进入工具
+          </Link>
+        </section>
+        <section className="home-card">
+          <span className="home-card__meta">生成</span>
+          <h2>JSON 转 C# Class</h2>
+          <p>根据样本生成 C# 类型，支持命名空间、根类名和 JsonPropertyName 映射。</p>
+          <Link className="home-card__link" to="/converter">
+            进入工具
+          </Link>
         </section>
       </div>
     </div>

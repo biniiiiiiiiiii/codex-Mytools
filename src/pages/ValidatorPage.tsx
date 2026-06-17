@@ -84,7 +84,7 @@ export function ValidatorPage() {
   return (
     <div className="page">
       <section className="page__hero">
-        <p className="page__eyebrow">Validator</p>
+        <p className="page__eyebrow">语法检查</p>
         <h2 className="page__title">JSON 校验</h2>
         <p className="page__description">检查 JSON 是否合法，并尽量给出错误位置与友好提示，帮助快速定位语法问题。</p>
       </section>

@@ -117,7 +117,7 @@ export function FormatterPage() {
   return (
     <div className="page">
       <section className="page__hero">
-        <p className="page__eyebrow">Formatter</p>
+        <p className="page__eyebrow">JSON 处理</p>
         <h2 className="page__title">格式化 / 压缩</h2>
         <p className="page__description">把合法 JSON 美化为可读格式，或压缩成单行，所有处理都在浏览器本地完成。</p>
       </section>

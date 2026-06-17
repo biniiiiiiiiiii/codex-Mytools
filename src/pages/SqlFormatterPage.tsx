@@ -157,7 +157,7 @@ export function SqlFormatterPage() {
   return (
     <div className="page">
       <section className="page__hero">
-        <p className="page__eyebrow">SQL FORMATTER</p>
+        <p className="page__eyebrow">SQL 阅读</p>
         <h2 className="page__title">SQL 格式化</h2>
         <p className="page__description">
           把 SQL 美化为更易读的格式，支持多种常见数据库方言，所有处理都在浏览器本地完成。

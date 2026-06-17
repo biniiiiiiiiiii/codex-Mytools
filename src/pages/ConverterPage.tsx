@@ -189,7 +189,7 @@ export function ConverterPage() {
   return (
     <div className="page">
       <section className="page__hero">
-        <p className="page__eyebrow">Converter</p>
+        <p className="page__eyebrow">结构生成</p>
         <h2 className="page__title">JSON 转 C# Class</h2>
         <p className="page__description">
           根据 JSON 样本在浏览器本地生成 C# class，支持根类名、命名空间、属性映射和可选日期识别。
